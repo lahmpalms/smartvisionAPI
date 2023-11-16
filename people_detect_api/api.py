@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pymongo import MongoClient
 from peoplecountv8 import main, process_video  # Import your detection function
 from typing import Annotated, Generator
+import json
 
 app = FastAPI()
 
@@ -114,6 +115,28 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
 def get_data_from_file(file_path: str) -> Generator:
     with open(file=file_path, mode="rb") as file_like:
         yield file_like.read()
+
+
+@app.get("/getlogclouddata")
+def get_data():
+    try:
+        results = collection.find()
+        data = []
+        for res in results:
+            res["_id"] = str(res["_id"])
+            data.append(res)
+        if data:
+            return JSONResponse(content={
+                "data": data,
+                "code": 200,
+                "message": "ok",
+            })
+        else:
+            raise HTTPException(
+                status_code=404, detail="Data not found in MongoDB.")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == '__main__':
