@@ -5,7 +5,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-def get_latest_output_image():
+def get_latest_output_image(precess_type: str):
     output_directory = 'runs/detect'
     run_directories = os.listdir(output_directory)
     predict_directories = [
@@ -17,7 +17,7 @@ def get_latest_output_image():
     latest_predict_directory = max(predict_directories, key=lambda d: int(
         d[len('predict'):]) if d[len('predict'):] else -1)
     latest_output_image = os.path.join(
-        output_directory, latest_predict_directory, 'input_image.jpg')
+        output_directory, latest_predict_directory, precess_type)
 
     return latest_output_image
 
@@ -32,7 +32,7 @@ def main(input_image_path):
         logging.info(f"Results saved in: {results[0].save_dir}")
 
         # Save the processed image to an output file
-        latest_image_path = get_latest_output_image()
+        latest_image_path = get_latest_output_image('input_image.jpg')
 
         data = {
             "results": results[0],
@@ -46,6 +46,35 @@ def main(input_image_path):
 
         # Delete the input image and the YOLOv8 output directory
         os.remove(input_image_path)
+
+        return data
+    except Exception as e:
+        logging.error(f"An error occurred: {str(e)}")
+        return None
+
+
+def process_video(path):
+    try:
+        model = YOLO('yolov8s.pt')
+        results = model.predict(path, save=True, classes=0)
+        logging.info(f"Results saved in: {results[0].save_dir}")
+        # Save the processed image to an output file
+        latest_image_path = get_latest_output_image("input_video.mp4")
+
+        print('results', results[0])
+
+        data = {
+            "results": results[0],
+            "latest_image_path": latest_image_path
+        }
+
+        if latest_image_path:
+            logging.info(f"Latest Output Image Path: {latest_image_path}")
+        else:
+            logging.warning("No 'predict' directories found.")
+
+        # Delete the input image and the YOLOv8 output directory
+        os.remove(path)
 
         return data
     except Exception as e:
