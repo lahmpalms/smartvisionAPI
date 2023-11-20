@@ -56,7 +56,7 @@ def main(input_image_path):
 def process_video(path):
     try:
         model = YOLO('yolov8s.pt')
-        results = model.predict(path, save=True, classes=0)
+        results = model.predict(path, save=True, classes=0, stream=True)
         logging.info(f"Results saved in: {results[0].save_dir}")
         # Save the processed image to an output file
         latest_image_path = get_latest_output_image("input_video.avi")
