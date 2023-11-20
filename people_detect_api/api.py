@@ -3,12 +3,21 @@ import shutil
 import base64
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from peoplecountv8 import main, process_video  # Import your detection function
 from typing import Annotated, Generator
 import json
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Connect to MongoDB
 client = MongoClient("mongodb://admin:islabac123@18.143.76.245:27017")
