@@ -113,11 +113,13 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
         if result.inserted_id:
             def stream_video():
                 try:
-                    with open(output_image_path["latest_image_path"], "rb") as file_like:
-                        chunk = file_like.read(1024)
-                        while chunk:
-                            yield chunk
-                            chunk = file_like.read(1024)
+                    with open(output_image_path["latest_image_path"], mode="rb") as file_like:
+                        yield from file_like
+                    # with open(output_image_path["latest_image_path"], "rb") as file_like:
+                    #     chunk = file_like.read(1024)
+                    #     while chunk:
+                    #         yield chunk
+                    #         chunk = file_like.read(1024)
                 finally:
                     # Remove the image file after reading
                     os.remove(output_image_path["latest_image_path"])
