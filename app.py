@@ -114,14 +114,15 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
             def stream_video():
                 try:
                     with open(output_image_path["latest_image_path"], "rb") as file_like:
-                        chunk = file_like.read(1024)
+                        chunk = file_like.read()
                         while chunk:
                             yield chunk
-                            chunk = file_like.read(1024)
+                            chunk = file_like.read()
+                            return StreamingResponse(stream_video(), media_type=file_like.content_type)
                 finally:
                     # Remove the image file after reading
                     os.remove(output_image_path["latest_image_path"])
-            return StreamingResponse(stream_video())
+
         else:
             return JSONResponse(content={"error": "Failed to insert data into MongoDB."})
 
