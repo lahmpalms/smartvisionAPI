@@ -111,15 +111,17 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
             "data": coordinate
         })
         if result.inserted_id:
-            return JSONResponse(content={
-                "data": {
-                    "base64_image": output_image_path["latest_image_path"],
-                    "coordinate_data": coordinate
-                },
-                "code": 200,
-                "message": "ok",
-                "mongodb_inserted_id": str(result.inserted_id)
-            })
+            def stream_video():
+                try:
+                    with open(output_image_path["latest_image_path"], "rb") as file_like:
+                        chunk = file_like.read(10000)
+                        while chunk:
+                            yield chunk
+                            chunk = file_like.read(10000)
+                finally:
+                    # Remove the image file after reading
+                    os.remove(output_image_path["latest_image_path"])
+            return StreamingResponse(stream_video(), media_type="video/mp4")
         else:
             return JSONResponse(content={"error": "Failed to insert data into MongoDB."})
 
