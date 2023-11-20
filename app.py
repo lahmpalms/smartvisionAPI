@@ -11,8 +11,17 @@ import json
 import face_recognition
 import cv2
 import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Connect to MongoDB
 client = MongoClient("mongodb://admin:islabac123@18.143.76.245:27017")
