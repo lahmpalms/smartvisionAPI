@@ -1,4 +1,5 @@
 import os
+import pathlib
 import shutil
 import base64
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -113,7 +114,7 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
                 finally:
                     # Remove the image file after reading
                     os.remove(output_image_path["latest_image_path"])
-            return StreamingResponse(stream_video(), media_type="video/mp4")
+            return StreamingResponse(stream_video(), media_type="text/event-stream")
         else:
             return JSONResponse(content={"error": "Failed to insert data into MongoDB."})
 
