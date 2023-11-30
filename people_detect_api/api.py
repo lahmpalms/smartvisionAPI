@@ -4,7 +4,7 @@ import base64
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from pymongo import MongoClient
-from peoplecountv8 import main, process_video  # Import your detection function
+from people_detect_api.people_detect import main, process_video  # Import your detection function
 from typing import Annotated, Generator
 import json
 
