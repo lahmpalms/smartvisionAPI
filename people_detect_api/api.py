@@ -1,14 +1,24 @@
 import os
+import pathlib
 import shutil
 import base64
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from people_detect_api.people_detect import main, process_video  # Import your detection function
 from typing import Annotated, Generator
 import json
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Connect to MongoDB
 client = MongoClient("mongodb://admin:islabac123@18.143.76.245:27017")
@@ -104,7 +114,7 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
                 finally:
                     # Remove the image file after reading
                     os.remove(output_image_path["latest_image_path"])
-            return StreamingResponse(stream_video(), media_type="video/mp4")
+            return StreamingResponse(stream_video(), media_type="text/event-stream")
         else:
             return JSONResponse(content={"error": "Failed to insert data into MongoDB."})
 
