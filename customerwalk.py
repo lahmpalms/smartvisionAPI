@@ -19,19 +19,18 @@ def main():
     model = YOLO('yolov8m.pt')
 
     src = "rtsp://admin:cctv12345@10.10.2.194:554/Streaming/Channels/0102"
-    # src = "/Users/macbook/Desktop/code/py/ml/baksters/entech/footage/staffhelpmove.mp4"
     video = cv2.VideoCapture(src)
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Define the codec (XVID, MJPEG, etc.)
     
     cap_width, cap_height = int(video.get(cv2.CAP_PROP_FRAME_WIDTH)), int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))   
-
+    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (cap_width, cap_height))
     #stream: used for processing long videos or live feed; uses a generator, which only
     #keeps the results of the current frame in memory, significantly reducing memory consumption.
     results = model.track(source=src, classes=0, device='0',
                           tracker="bytetrack.yaml", stream=True, conf=0.5)
 
-    staff_id = None 
     people = {}
-    leftzone = False
+    customer = 0
 
     polygon_coords = np.array([[31, 288], [230, 288], [173, 117], [25, 116]]) 
     polygon_zone = sv.PolygonZone(polygon=polygon_coords, 
@@ -40,10 +39,11 @@ def main():
     polygon_annotator = sv.PolygonZoneAnnotator(zone=polygon_zone, color=sv.Color.green())
 
     box_annotator = sv.BoxAnnotator()
+    processed_ids = set()
+    
     for result in results:
 
         curr_dt = datetime.datetime.now()
-        record_datetime_str = curr_dt.strftime("%Y-%m-%d %H:%M:%S")
 
         frame = result.orig_img
         h, w = frame.shape[:2]
@@ -79,6 +79,7 @@ def main():
                     people[id] = [[], [], []] #position, centroid
                     people[id][0].append(in_zone[idx])
                     people[id][1] = clipped_anchors[idx]
+                    
             else: 
                 for idx, id in enumerate(detections.tracker_id):
                     if id in people.keys():
@@ -98,18 +99,25 @@ def main():
             
             
                 for idx, (id, info) in enumerate(people.items()):
-                    if len(info[0]) > 15 and all(info[0]): 
+                    if len(info[0]) > 15 and all(info[0]) and id not in processed_ids: 
                         staff_id = id
-                        print(f"STAFF FOUND: {staff_id}")
-                        mydict = { "status": "Customer Enter", "time": curr_dt }
+                        customer += 1
+                        processed_ids.add(id)
+                        # print ("count: ", customer)
+                        # print(f"Customer Enter: {staff_id}")
+                        mydict = { "status": "Customer Enter", "time": curr_dt, "count": customer}
                         x = mycol.insert_one(mydict)
-
+        
+        cv2.putText(frame, f"Count: {customer}", (11, 60), 0, 0.8, [0, 2550, 0], thickness=2, lineType= cv2.LINE_AA)
         cv2.imshow('Customer Detection', frame)
+
+        out.write(frame)
 
         if cv2.waitKey(1) == ord('q'):
             break
 
     video.release()
+    out.release()
     cv2.destroyAllWindows
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from pymongo import MongoClient
 # Import your detection function
-from people_detect_api.peoplecountv8 import main, process_video
+from people_detect_api.people_detect import main, process_video
 from typing import Annotated, Generator
 import json
 import face_recognition
@@ -192,14 +192,14 @@ async def detect_faces(image: UploadFile = File(...)):
 
         # Encode the resulting image as JPEG binary data
         retval, buffer = cv2.imencode('.jpg', image_rgb)
-        image_jpg = buffer.tobytes()
+        image_rgb = buffer.tobytes()
 
         # Convert the image to base64
-        base64_image = base64.b64encode(image_jpg).decode('utf-8')
+        base64_image = base64.b64encode(image_rgb).decode('utf-8')
 
         # Return the image as a streaming response
         image_response = StreamingResponse(
-            content=image_jpg, media_type="image/jpeg")
+            content=image_rgb, media_type="image/jpeg")
 
         # Return the face coordinates and base64 image as a JSON response
         return JSONResponse(content={"face_locations": face_coordinates, "base64_image": base64_image}, status_code=200)
