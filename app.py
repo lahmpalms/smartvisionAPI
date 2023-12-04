@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pymongo import MongoClient
 # Import your detection function
 from people_detect_api.people_detect import main, process_video
+from classification.process import classification_processing
 from typing import Annotated, Generator
 import json
 import face_recognition
@@ -208,6 +209,56 @@ async def detect_faces(image: UploadFile = File(...)):
         raise HTTPException(status_code=404, detail="File not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/gender-classifications")
+async def detect_people(image: UploadFile):
+    try:
+        # Save the uploaded image file
+        file_path = "input_image.jpg"
+        with open(file_path, "wb") as f:
+            f.write(image.file.read())
+
+        # Call your YOLOv8 detection function asynchronously
+        output_image_path = classification_processing(file_path)
+        coordinate = []
+        for index, box in enumerate(output_image_path["results"].boxes):
+            data = {
+                "people_id": index,
+                "people_cor": box.xyxy.tolist(),
+                "class_id": box.cls.item(),
+                "confidence": box.conf.item()
+            }
+            coordinate.append(data)
+
+        # Store data in MongoDB
+        result = collection.insert_one({
+            "image_path": output_image_path["latest_image_path"],
+            "data": coordinate
+        })
+
+        if result.inserted_id:
+            # Convert the output image to base64
+            with open(output_image_path["latest_image_path"], "rb") as image_file:
+                image_base64 = base64.b64encode(
+                    image_file.read()).decode("utf-8")
+
+            # Remove the image file after reading
+            os.remove(output_image_path["latest_image_path"])
+
+            return JSONResponse(content={
+                "data": {
+                    "base64_image": image_base64,
+                    "coordinate_data": coordinate
+                },
+                "code": 200,
+                "message": "ok",
+                "mongodb_inserted_id": str(result.inserted_id)
+            })
+        else:
+            return JSONResponse(content={"error": "Failed to insert data into MongoDB."})
+
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)})
 
 if __name__ == '__main__':
     import uvicorn
