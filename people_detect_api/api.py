@@ -84,7 +84,7 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
             raise HTTPException(
                 status_code=400, detail="Invalid file type. Please upload a video file.")
         else:
-            file_path = "input_video.mp4"
+            file_path = "input_video.avi"
         with open(file_path, "wb") as f:
             f.write(video.file.read())
         output_image_path = process_video(file_path)
