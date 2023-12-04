@@ -91,7 +91,7 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
             raise HTTPException(
                 status_code=400, detail="Invalid file type. Please upload a video file.")
         else:
-            file_path = "input_video.avi"
+            file_path = "input_video.mp4"
         with open(file_path, "wb") as f:
             f.write(video.file.read())
         output_image_path = process_video(file_path)
@@ -121,15 +121,7 @@ async def get_video_detect_people(video: Annotated[UploadFile, File(description=
                 finally:
                     # Remove the image file after reading
                     os.remove(output_image_path["latest_image_path"])
-            return JSONResponse(content={
-                "data": {
-                    "image_path": output_image_path["latest_image_path"],
-                    "coordinate_data": coordinate
-                },
-                "code": 200,
-                "message": "ok",
-                "mongodb_inserted_id": str(result.inserted_id)
-            })
+            return StreamingResponse(stream_video(), media_type="video/mp4")
         else:
             return JSONResponse(content={"error": "Failed to insert data into MongoDB."})
 

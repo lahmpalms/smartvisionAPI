@@ -59,7 +59,7 @@ def process_video(path):
         results = model.predict(path, save=True, classes=0)
         logging.info(f"Results saved in: {results[0].save_dir}")
         # Save the processed image to an output file
-        latest_image_path = get_latest_output_image("input_video.avi")
+        latest_image_path = get_latest_output_image("input_video.mp4")
 
         print('results', results[0])
 
